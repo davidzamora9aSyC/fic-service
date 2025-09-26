@@ -14,6 +14,8 @@ enum TipoEntidadFinanciera {
   FIDUCIARIA
   COMISIONISTA
   SIMULADA
+
+  @@schema("fic")
 }
 
 enum FicCategoria {
@@ -23,6 +25,8 @@ enum FicCategoria {
   MERCADO_MONETARIO
   ESTRUCTURADO
   ETF
+
+  @@schema("fic")
 }
 
 enum FicLiquidez {
@@ -31,6 +35,8 @@ enum FicLiquidez {
   QUINCENAL
   MENSUAL
   TRIMESTRAL
+
+  @@schema("fic")
 }
 
 enum FicOrdenTipo {
@@ -38,6 +44,8 @@ enum FicOrdenTipo {
   APORTE
   REDENCION
   TRASPASO
+
+  @@schema("fic")
 }
 
 enum FicOrdenEstado {
@@ -49,6 +57,8 @@ enum FicOrdenEstado {
   APROBADA
   RECHAZADA
   CANCELADA
+
+  @@schema("fic")
 }
 
 enum FicCuentaEstado {
@@ -57,6 +67,8 @@ enum FicCuentaEstado {
   INACTIVA
   BLOQUEADA
   CERRADA
+
+  @@schema("fic")
 }
 
 enum FicTransaccionTipo {
@@ -65,6 +77,8 @@ enum FicTransaccionTipo {
   VALORIZACION
   AJUSTE
   REINVERSION
+
+  @@schema("fic")
 }
 
 model EntidadFinanciera {
@@ -135,7 +149,7 @@ model FicCuenta {
   saldoCuotas        Decimal        @map("saldo_cuotas") @default(0)
   saldoPesos         Decimal        @map("saldo_pesos") @default(0)
   estado             FicCuentaEstado
-  ordenAperturaId    String?        @map("orden_apertura_id")
+  ordenAperturaId    String?        @unique @map("orden_apertura_id")
   cerradaEn          DateTime?      @map("cerrada_en")
   creadoEn           DateTime       @default(now()) @map("creado_en")
   actualizadoEn      DateTime       @updatedAt @map("actualizado_en")
