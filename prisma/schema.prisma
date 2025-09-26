@@ -1,0 +1,220 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["fic"]
+}
+
+enum TipoEntidadFinanciera {
+  BANCO
+  FIDUCIARIA
+  COMISIONISTA
+  SIMULADA
+}
+
+enum FicCategoria {
+  RENTA_FIJA
+  RENTA_VARIABLE
+  BALANCEADO
+  MERCADO_MONETARIO
+  ESTRUCTURADO
+  ETF
+}
+
+enum FicLiquidez {
+  DIARIA
+  SEMANAL
+  QUINCENAL
+  MENSUAL
+  TRIMESTRAL
+}
+
+enum FicOrdenTipo {
+  APERTURA
+  APORTE
+  REDENCION
+  TRASPASO
+}
+
+enum FicOrdenEstado {
+  BORRADOR
+  PENDIENTE_DOCS
+  EN_VALIDACION
+  LISTA_ENVIO
+  ENVIADA
+  APROBADA
+  RECHAZADA
+  CANCELADA
+}
+
+enum FicCuentaEstado {
+  PENDIENTE
+  ACTIVA
+  INACTIVA
+  BLOQUEADA
+  CERRADA
+}
+
+enum FicTransaccionTipo {
+  APORTE
+  REDENCION
+  VALORIZACION
+  AJUSTE
+  REINVERSION
+}
+
+model EntidadFinanciera {
+  id               String    @id @default(uuid())
+  nombre           String
+  tipoEntidad      TipoEntidadFinanciera @map("tipo_entidad")
+  codigoSuper      String?   @map("codigo_super")
+  pais             String
+  canalIntegracion String?   @map("canal_integracion")
+  creadoEn         DateTime  @default(now()) @map("creado_en")
+  actualizadoEn    DateTime  @updatedAt @map("actualizado_en")
+
+  fondos FicFondo[]
+
+  @@unique([nombre, pais])
+  @@map("entidad_financiera")
+  @@schema("fic")
+}
+
+model FicFondo {
+  id               String      @id @default(uuid())
+  entidadId        String      @map("entidad_id")
+  codigo           String
+  nombre           String
+  categoria        FicCategoria
+  descripcion      String?
+  valorCuota       Decimal?    @map("valor_cuota")
+  minimoApertura   Decimal     @map("minimo_apertura")
+  comisionGestion  Decimal?    @map("comision_gestion")
+  liquidez         FicLiquidez
+  moneda           String      @default("COP")
+  creadoEn         DateTime    @default(now()) @map("creado_en")
+  actualizadoEn    DateTime    @updatedAt @map("actualizado_en")
+
+  entidad          EntidadFinanciera @relation(fields: [entidadId], references: [id])
+  cuentas          FicCuenta[]
+  ordenes          FicOrden[]
+
+  @@unique([entidadId, codigo])
+  @@map("fic_fondo")
+  @@schema("fic")
+}
+
+model PerfilRiesgo {
+  id                 String   @id @default(uuid())
+  usuarioId          String   @map("usuario_id")
+  metodologia        String
+  fechaEvaluacion    DateTime @map("fecha_evaluacion")
+  nivel              String
+  objetivosInversion String?  @map("objetivos_inversion")
+  toleranciaPerdida  String?  @map("tolerancia_perdida")
+  observaciones      String?
+  creadoEn           DateTime @default(now()) @map("creado_en")
+
+  ordenes            FicOrden[]
+
+  @@index([usuarioId], map: "perfil_riesgo_usuario_id_idx")
+  @@map("perfil_riesgo")
+  @@schema("fic")
+}
+
+model FicCuenta {
+  id                 String         @id @default(uuid())
+  usuarioId          String         @map("usuario_id")
+  fondoId            String         @map("fondo_id")
+  numeroCuentaExterna String?       @map("numero_cuenta_externa")
+  fechaApertura      DateTime       @map("fecha_apertura")
+  saldoCuotas        Decimal        @map("saldo_cuotas") @default(0)
+  saldoPesos         Decimal        @map("saldo_pesos") @default(0)
+  estado             FicCuentaEstado
+  ordenAperturaId    String?        @map("orden_apertura_id")
+  cerradaEn          DateTime?      @map("cerrada_en")
+  creadoEn           DateTime       @default(now()) @map("creado_en")
+  actualizadoEn      DateTime       @updatedAt @map("actualizado_en")
+
+  fondo              FicFondo       @relation(fields: [fondoId], references: [id])
+  ordenApertura      FicOrden?      @relation("OrdenAperturaCuenta", fields: [ordenAperturaId], references: [id])
+  transacciones      FicTransaccion[]
+
+  @@index([usuarioId], map: "fic_cuenta_usuario_id_idx")
+  @@map("fic_cuenta")
+  @@schema("fic")
+}
+
+model FicOrden {
+  id                    String         @id @default(uuid())
+  usuarioId             String         @map("usuario_id")
+  fondoId               String         @map("fondo_id")
+  perfilRiesgoId        String?        @map("perfil_riesgo_id")
+  tipo                  FicOrdenTipo
+  moneda                String         @default("COP")
+  monto                 Decimal
+  estado                FicOrdenEstado
+  documentoFormularioId String?        @map("documento_formulario_id")
+  nota                  String?
+  fechaEnvio            DateTime?      @map("fecha_envio")
+  fechaDecision         DateTime?      @map("fecha_decision")
+  razonRechazo          String?        @map("razon_rechazo")
+  cuentaDestino         String?        @map("cuenta_destino")
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  fondo                 FicFondo       @relation(fields: [fondoId], references: [id])
+  perfilRiesgo          PerfilRiesgo?  @relation(fields: [perfilRiesgoId], references: [id])
+  cuentaApertura        FicCuenta?     @relation("OrdenAperturaCuenta")
+  transacciones         FicTransaccion[]
+
+  @@index([usuarioId], map: "fic_orden_usuario_id_idx")
+  @@map("fic_orden")
+  @@schema("fic")
+}
+
+model FicTransaccion {
+  id                     String              @id @default(uuid())
+  cuentaId               String              @map("cuenta_id")
+  ordenId                String?             @map("orden_id")
+  tipo                   FicTransaccionTipo
+  montoCuotas            Decimal?            @map("monto_cuotas")
+  montoPesos             Decimal             @map("monto_pesos")
+  moneda                 String              @default("COP")
+  fechaValor             DateTime            @map("fecha_valor")
+  referenciaExterna      String?             @map("referencia_externa")
+  documentoSoporteId     String?             @map("documento_soporte_id")
+  saldoCuotasPosterior   Decimal?            @map("saldo_cuotas_posterior")
+  saldoPesosPosterior    Decimal             @map("saldo_pesos_posterior")
+  descripcion            String?
+  creadoEn               DateTime            @default(now()) @map("creado_en")
+
+  cuenta                 FicCuenta           @relation(fields: [cuentaId], references: [id])
+  orden                  FicOrden?           @relation(fields: [ordenId], references: [id])
+
+  @@index([cuentaId], map: "fic_transaccion_cuenta_id_idx")
+  @@map("fic_transaccion")
+  @@schema("fic")
+}
+
+model IntegracionEvento {
+  id              String   @id @default(uuid())
+  objetoId        String   @map("objeto_id")
+  objetoTipo      String   @map("objeto_tipo")
+  tipoEvento      String   @map("tipo_evento")
+  payload         Json
+  estadoEnvio     String   @map("estado_envio")
+  enviadoEn       DateTime? @map("enviado_en")
+  reintentos      Int      @default(0)
+  ultimoError     String?  @map("ultimo_error")
+  creadoEn        DateTime @default(now()) @map("creado_en")
+  actualizadoEn   DateTime @updatedAt @map("actualizado_en")
+
+  @@index([estadoEnvio], map: "integracion_evento_estado_envio_idx")
+  @@map("integracion_evento")
+  @@schema("fic")
+}
