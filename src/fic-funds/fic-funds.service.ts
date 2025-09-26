@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, FicCategoria, FicLiquidez } from '@prisma/client';
+import { FicCategoria, FicLiquidez } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { ListFicFundsDto } from './dto/list-fic-funds.dto';
@@ -9,16 +9,16 @@ export class FicFundsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async list(pagination: PaginationQueryDto, filters: ListFicFundsDto) {
-    const where: Prisma.FicFondoWhereInput = {
+    const where = {
       entidadId: filters.entidadId,
       categoria: filters.categoria as FicCategoria | undefined,
       liquidez: filters.liquidez as FicLiquidez | undefined,
       ...(filters.search
         ? {
             OR: [
-              { nombre: { contains: filters.search, mode: 'insensitive' } },
-              { codigo: { contains: filters.search, mode: 'insensitive' } },
-              { entidad: { nombre: { contains: filters.search, mode: 'insensitive' } } },
+              { nombre: { contains: filters.search, mode: 'insensitive' as const } },
+              { codigo: { contains: filters.search, mode: 'insensitive' as const } },
+              { entidad: { nombre: { contains: filters.search, mode: 'insensitive' as const } } },
             ],
           }
         : {}),

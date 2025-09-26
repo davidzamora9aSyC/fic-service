@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { FicOrdenEstado, Prisma } from '@prisma/client';
+import { FicOrdenEstado } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { CreateFicOrderDto } from './dto/create-fic-order.dto';
@@ -27,7 +27,7 @@ export class FicOrdersService {
   }
 
   async list(pagination: PaginationQueryDto, filters: ListFicOrdersDto) {
-    const where: Prisma.FicOrdenWhereInput = {
+    const where = {
       usuarioId: filters.usuarioId,
       fondoId: filters.fondoId,
       estado: filters.estado,

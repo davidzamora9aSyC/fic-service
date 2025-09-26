@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { CreateRiskProfileDto } from './dto/create-risk-profile.dto';
@@ -24,7 +23,7 @@ export class FicRiskService {
   }
 
   async list(pagination: PaginationQueryDto, filters: ListRiskProfileDto) {
-    const where: Prisma.PerfilRiesgoWhereInput = {
+    const where = {
       usuarioId: filters.usuarioId,
     };
 

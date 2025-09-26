@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaginationQueryDto } from '../common/dto/pagination-query.dto';
 import { ListFicTransactionsDto } from './dto/list-fic-transactions.dto';
@@ -10,7 +9,7 @@ export class FicTransactionsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async listByAccount(accountId: string, pagination: PaginationQueryDto, filters: ListFicTransactionsDto) {
-    const where: Prisma.FicTransaccionWhereInput = {
+    const where = {
       cuentaId: accountId,
       tipo: filters.tipo,
       ...(filters.from || filters.to
