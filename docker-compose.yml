@@ -1,0 +1,24 @@
+services:
+  fic-service:
+    image: node:20-bullseye
+    container_name: fic-service
+    working_dir: /app
+    command: sh -c "npm install && npx prisma generate && npm run start:dev"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://root:rootpassword@dev_postgres:5432/main_db?schema=fic
+    ports:
+      - "3005:3000"
+    volumes:
+      - ./:/app
+      - fic-service-node-modules:/app/node_modules
+    networks:
+      - ms-network
+
+volumes:
+  fic-service-node-modules:
+
+networks:
+  ms-network:
+    external: true
